@@ -1,30 +1,61 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import {computed, defineAsyncComponent, ref} from "vue";
+import type { Component } from "vue";
+
+const tabs = [
+    {
+        id: 1,
+        label: 'Слайдер',
+    },
+    {
+        id: 2,
+        label: 'Категории',
+    },
+    {
+        id: 3,
+        label: 'Коллекции',
+    },
+];
+
+const components: Record<number, Component> = {
+    1: defineAsyncComponent(() => import('./components/SliderEditor.vue')),
+    2: defineAsyncComponent(() => import('./components/CategoriesEditor.vue')),
+    3: defineAsyncComponent(() => import('./components/CollectionsEditor.vue')),
+};
+
+const selectedTabId = ref(1);
+const selectedComponent = computed(() => {
+    return components[selectedTabId.value];
+})
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+    <h1>Генератор контента для сайта</h1>
+
+    <div class="main">
+        <div class="main__tabs">
+            <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                :class="{'active-tab': selectedTabId === tab.id}"
+                @click="selectedTabId = tab.id"
+            >
+                {{ tab.label }}
+            </button>
+        </div>
+
+        <component :is="selectedComponent" />
+    </div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.main {
+    height: calc(100vh - 64px);
+    width: 100%;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.active-tab {
+    background: #646cff;
+    color: white;
 }
 </style>
