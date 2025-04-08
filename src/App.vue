@@ -1,56 +1,67 @@
 <script setup lang="ts">
 import {computed, defineAsyncComponent, ref} from "vue";
 import type { Component } from "vue";
+import type {ContentType} from "./types/main-types.ts";
 
-const tabs = [
+const tabs: {
+    value: ContentType,
+    label: string
+}[] = [
     {
-        id: 1,
+        value: 'slides',
         label: 'Слайдер',
     },
     {
-        id: 2,
+        value: 'categories',
         label: 'Категории',
     },
     {
-        id: 3,
+        value: 'collections',
         label: 'Коллекции',
     },
 ];
 
-const components: Record<number, Component> = {
-    1: defineAsyncComponent(() => import('./components/SliderEditor.vue')),
-    2: defineAsyncComponent(() => import('./components/CategoriesEditor.vue')),
-    3: defineAsyncComponent(() => import('./components/CollectionsEditor.vue')),
+const components: Record<ContentType, Component> = {
+    slides: defineAsyncComponent(() => import('./components/SliderEditor.vue')),
+    categories: defineAsyncComponent(() => import('./components/CategoriesEditor.vue')),
+    collections: defineAsyncComponent(() => import('./components/CollectionsEditor.vue')),
 };
 
-const selectedTabId = ref(1);
+const selectedTabValue = ref<ContentType>(tabs[0].value);
 const selectedComponent = computed(() => {
-    return components[selectedTabId.value];
+    return components.slides;
+
+    // return components[selectedTabValue.value];
 })
 </script>
 
 <template>
-    <h1>Генератор контента для сайта</h1>
+    <h1 class="title">Генератор контента для сайта</h1>
 
     <div class="main">
         <div class="main__tabs">
             <button
                 v-for="tab in tabs"
-                :key="tab.id"
-                :class="{'active-tab': selectedTabId === tab.id}"
-                @click="selectedTabId = tab.id"
+                :key="tab.value"
+                :class="{'active-tab': selectedTabValue === tab.value}"
+                @click="selectedTabValue = tab.value"
             >
                 {{ tab.label }}
             </button>
         </div>
 
-        <component :is="selectedComponent" />
+        <component :is="selectedComponent" :type="selectedTabValue" />
     </div>
 </template>
 
-<style scoped>
+<style>
+.title {
+    height: 64px;
+    margin: 12px 0 24px;
+}
+
 .main {
-    height: calc(100vh - 64px);
+    height: calc(100vh - 100px);
     width: 100%;
 }
 
