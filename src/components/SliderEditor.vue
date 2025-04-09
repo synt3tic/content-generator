@@ -92,6 +92,38 @@ onMounted(() => {
         slides.value.collections = JSON.parse(collectionsJSON);
     }
 })
+
+const isModalVisible = ref(false);
+const codeFromSite = ref('');
+
+const extractArrayFromString = (str: string) => {
+    // Удаляем лишние пробелы, переносы строк и точку с запятой в конце
+    const cleanedStr = str.replace(/[\n\t]/g, '').replace(/;\s*$/, '').trim();
+
+    // Извлекаем часть с массивом (удаляем "const varName =")
+    const arrayPart = cleanedStr.replace(/^const\s+\w+\s*=\s*/, '');
+
+    try {
+        // Выполняем код и возвращаем массив (безопаснее, чем eval)
+        return new Function(`return ${arrayPart}`)();
+    } catch (e) {
+        console.error('Error parsing array:', e);
+        return null;
+    }
+}
+
+const saveCodeFromSite = () => {
+    const obj = extractArrayFromString(codeFromSite.value);
+
+    if (obj) {
+        slides.value[props.type] = obj;
+        isModalVisible.value = false;
+        codeFromSite.value = '';
+        saveResultToLocalStorage();
+    } else {
+        alert('Ошибка обработки данных');
+    }
+};
 </script>
 
 <template>
@@ -115,13 +147,40 @@ onMounted(() => {
     </div>
 
     <div class="result">
-        <h3>Результат</h3>
+        <div class="result__title">
+            <h3>Результат</h3>
+            <button @click="isModalVisible = true">Вставить контент с сайта</button>
+        </div>
         <pre>{{ preview }}</pre>
         <button @click="copyToClipboard">Копировать в буфер</button>
     </div>
+
+    <teleport to="body">
+        <Transition>
+            <div v-if="isModalVisible" class="modal-wrapper">
+                <button class="close" @click="isModalVisible = false">X</button>
+
+                <div class="modal">
+                    <h4>Вставка кода с сайта для редактирования</h4>
+                    <textarea v-model="codeFromSite" placeholder="Вставь код между засечек с сайта" />
+                    <button @click="saveCodeFromSite">Сохранить</button>
+                </div>
+            </div>
+        </Transition>
+    </teleport>
 </template>
 
 <style scoped>
+.v-enter-active,
+.v-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
+
 .slides-forms {
     display: flex;
     flex-wrap: wrap;
@@ -138,7 +197,7 @@ onMounted(() => {
     border: 2px solid #646cff;
 }
 
-.slides-forms__form input, .slides-forms__form textarea {
+input, textarea {
     border: 2px solid transparent;
     max-width: 190px;
     background-color: #f5f5f5;
@@ -153,16 +212,16 @@ onMounted(() => {
     font-family: sans-serif;
 }
 
-.slides-forms__form textarea {
+textarea {
     height: 128px;
     resize: none;
 }
 
-.slides-forms__form input:focus {
+input:focus {
     border-color: #646cff;
 }
 
-.slides-forms__form input:hover {
+input:hover {
     border-color: rgba(100, 108, 255, 0.5);
 }
 
@@ -176,12 +235,22 @@ onMounted(() => {
 }
 
 .result {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
     margin-top: 24px;
     padding: 16px;
     position: relative;
 }
 
+.result__title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .result pre {
+    width: 100%;
     white-space: pre-wrap;
     word-wrap: break-word;
     padding: 16px;
@@ -199,4 +268,41 @@ onMounted(() => {
 .button-dark:hover {
     background-color: #535bf2;
 }
+
+.modal-wrapper {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-wrapper .close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    width: 50vw;
+    min-width: 480px;
+    background-color: white;
+    border-radius: 16px;
+    padding: 16px;
+
+    h4 {
+        margin: 0 0 16px;
+    }
+
+    textarea {
+        height: 320px;
+        max-height: unset;
+        max-width: unset;
+        margin-bottom: 16px;
+    }
+}
+
 </style>
