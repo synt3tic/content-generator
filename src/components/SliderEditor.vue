@@ -96,7 +96,7 @@ onMounted(() => {
 const isModalVisible = ref(false);
 const codeFromSite = ref('');
 
-const extractArrayFromString = (str: string) => {
+const extractArrayFromString = <T>(str: string): T[] | null => {
     // Удаляем лишние пробелы, переносы строк и точку с запятой в конце
     const cleanedStr = str.replace(/[\n\t]/g, '').replace(/;\s*$/, '').trim();
 
@@ -113,10 +113,10 @@ const extractArrayFromString = (str: string) => {
 }
 
 const saveCodeFromSite = () => {
-    const obj = extractArrayFromString(codeFromSite.value);
+    const array = extractArrayFromString<Banner>(codeFromSite.value);
 
-    if (obj) {
-        slides.value[props.type] = obj;
+    if (array) {
+        slides.value[props.type] = array.map((el, index) => ({...el, id: index + 1}));
         isModalVisible.value = false;
         codeFromSite.value = '';
         saveResultToLocalStorage();
